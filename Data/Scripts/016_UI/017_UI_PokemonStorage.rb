@@ -680,25 +680,20 @@ def pbStartBox(screen, command)
   end
 
   def pbDisplay(message)
-    msgwindow = Window_UnformattedTextPokemon.newWithSize("", 180, 0, Graphics.width - 180, 900)
-    msgwindow.viewport       = @viewport
-    msgwindow.visible        = true
-    msgwindow.letterbyletter = false
-    msgwindow.resizeHeightToFit(message, Graphics.width - 180)
-    msgwindow.text = message
-    pbBottomRight(msgwindow)
-    loop do
-      Graphics.update
-      Input.update
-      if Input.trigger?(Input::BACK) || Input.trigger?(Input::USE)
-        break
-      end
-      msgwindow.update
-      self.update
-    end
-    msgwindow.dispose
-    Input.update
-  end
+    # This uses the built-in Essentials message window creator
+    msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+    
+    # Force the specific size and position you requested
+    msgwindow.width  = 512
+    msgwindow.height = 94 # Slightly taller to ensure 2-line clearance
+    msgwindow.x      = (Graphics.width - 512) / 2
+    msgwindow.y      = Graphics.height - msgwindow.height - 16
+    
+    # --- MULTI-LINE FIXES ---
+    pbMessageDisplay(msgwindow, message)
+    pbDisposeMessageWindow(msgwindow)
+	Input.update
+	end
 
 def pbShowCommands(message, commands, index = 0)
     ret = -1
@@ -707,15 +702,17 @@ def pbShowCommands(message, commands, index = 0)
     
     # MODIFIED: Only create and show the message window if a message is provided.
     if message && !message.empty?
-      msgwindow = Window_UnformattedTextPokemon.newWithSize("", 180, 0, Graphics.width - 180, 32)
-      msgwindow.viewport       = @viewport
-      msgwindow.visible        = true
-      msgwindow.letterbyletter = false
-      msgwindow.text           = message
-      msgwindow.resizeHeightToFit(message, Graphics.width - 180)
-      pbBottomRight(msgwindow)
-      msg_height = msgwindow.height
-    end
+      msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+      msgwindow.width  = 512
+      msgwindow.height = 94
+      msgwindow.x      = (Graphics.width - 512) / 2
+      msgwindow.y      = Graphics.height - msgwindow.height - 16
+      
+      # We don't use pbMessageDisplay here because we need the window to stay open
+      # for the commands. We use the internal text setter.
+      msgwindow.text = message
+      msg_height = msgwindow.height + 16
+	  end
     
     cmdwindow = Window_CommandPokemon.new(commands)
     cmdwindow.viewport = @viewport
@@ -2035,8 +2032,8 @@ class PokemonStorageScreen
         @storage.pbDelete(box, index)
       end
       @scene.pbRefresh
-      pbDisplay(_INTL("{1} was released.", pkmnname))
-      pbDisplay(_INTL("Bye-bye, {1}!", pkmnname))
+      pbDisplay(_INTL("{1} was released.\nBye-bye, {1}!", pkmnname))
+      #pbDisplay(_INTL("Bye-bye, {1}!", pkmnname))
       @scene.pbRefresh
     end
     return

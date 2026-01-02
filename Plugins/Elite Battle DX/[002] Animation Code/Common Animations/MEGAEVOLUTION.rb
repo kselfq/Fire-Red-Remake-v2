@@ -31,7 +31,7 @@ EliteBattle.defineCommonAnimation(:MEGAEVOLUTION2) do
   for i in 0...16
     fp["c#{i}"] = Sprite.new(@viewport)
     fp["c#{i}"].z = @targetSprite.z + 10
-    fp["c#{i}"].bitmap = pbBitmap(sprintf("Graphics/EBDX/Animations/Moves/ebMega%03d", rand(2)+1))
+    fp["c#{i}"].bitmap = pbBitmap(sprintf("Graphics/EBDX/Animations/Moves/ebMega%03d", rand(4)+1))
     fp["c#{i}"].center!
     fp["c#{i}"].opacity = 0
   end
@@ -69,10 +69,10 @@ EliteBattle.defineCommonAnimation(:MEGAEVOLUTION2) do
   end
   #-----------------------------------------------------------------------------
   fp["circle"] = Sprite.new(@viewport)
-  fp["circle"].bitmap = Bitmap.new(@targetSprite.bitmap.width*1.50,@targetSprite.bitmap.height*1.50)
+  fp["circle"].bitmap = Bitmap.new(@targetSprite.bitmap.width*1.25,@targetSprite.bitmap.height*1.25)
   fp["circle"].bitmap.bmp_circle
   fp["circle"].center!
-  fp["circle"].x = cx - 40
+  fp["circle"].x = cx
   fp["circle"].y = cy
   fp["circle"].z = @targetSprite.z + 10
   fp["circle"].zoom_x = 0

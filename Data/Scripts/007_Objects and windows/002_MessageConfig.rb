@@ -23,7 +23,7 @@ module MessageConfig
   # 1 = Pause cursor is displayed at bottom right
   # 2 = Pause cursor is displayed at lower middle side
   CURSOR_POSITION          = 1
-  WINDOW_OPACITY           = 255
+  WINDOW_OPACITY           = 245
   TEXT_SPEED               = nil   # Time in seconds between two characters
   @@systemFrame     = nil
   @@defaultTextSkin = nil
@@ -42,16 +42,16 @@ module MessageConfig
 
   def self.pbDefaultSpeechFrame
     if $PokemonSystem
-      return pbResolveBitmap("Graphics/Windowskins/" + Settings::SPEECH_WINDOWSKINS[$PokemonSystem.textskin]) || ""
+      return pbResolveBitmap("Graphics/Windowskins/speech frlg") || ""
     else
-      return pbResolveBitmap("Graphics/Windowskins/" + Settings::SPEECH_WINDOWSKINS[0]) || ""
+      return pbResolveBitmap("Graphics/Windowskins/speech frlg") || ""
     end
   end
 
   def self.pbDefaultWindowskin
     skin = ($data_system) ? $data_system.windowskin_name : nil
     if skin && skin != ""
-      skin = pbResolveBitmap("Graphics/Windowskins/" + skin) || ""
+      skin = pbResolveBitmap("Graphics/Windowskins/speech rs") || ""
     end
     skin = pbResolveBitmap("Graphics/System/Window") if nil_or_empty?(skin)
     skin = pbResolveBitmap("Graphics/Windowskins/001-Blue01") if nil_or_empty?(skin)
@@ -201,7 +201,7 @@ def pbBottomLeftLines(window, lines, width = nil)
   window.width  = window_width
   window.height = window_height
   window.x      = window_x
-  window.y      = window_y
+  window.y      = window_y - 16
 end
 
 def pbPositionFaceWindow(facewindow, msgwindow)
@@ -260,7 +260,7 @@ def pbRepositionMessageWindow(msgwindow, linecount = 2)
     when 1  # middle
       msgwindow.y = (Graphics.height / 2) - (msgwindow.height / 2)
     when 2
-      msgwindow.y = (Graphics.height) - (msgwindow.height)
+      msgwindow.y = (Graphics.height) - (msgwindow.height) - 16
     end
     msgwindow.opacity = 0 if $game_system.message_frame != 0
   end

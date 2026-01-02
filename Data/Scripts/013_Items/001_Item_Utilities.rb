@@ -126,16 +126,51 @@ def pbCanUseOnPokemon?(item)
   return ItemHandlers.hasUseOnPokemon(item) || GameData::Item.get(item).is_machine?
 end
 
+def pbDisplay(message)
+  # Change "speech bw" to whichever windowskin you prefer from Graphics/Windowskins/
+  msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+  pbMessageDisplay(msgwindow, message)
+  pbDisposeMessageWindow(msgwindow)
+  Input.update
+end
+
+def pbConfirm(message, scene = nil)
+  view = nil
+  if scene
+    if scene.respond_to?(:viewport)
+      view = scene.viewport
+    elsif scene.instance_variable_defined?(:@viewport)
+      view = scene.instance_variable_get(:@viewport)
+    end
+  end
+  # Create the window with your skin
+  msgwindow = pbCreateMessageWindow(view, "Graphics/Windowskins/speech rs")
+  msgwindow.text = message
+  # Create the Yes/No command window manually to avoid Modular Message conflicts
+  # This uses the default Essentials choice logic
+  ret = pbShowCommands(msgwindow, [_INTL("Yes"), _INTL("No")], 1)
+  pbDisposeMessageWindow(msgwindow)
+  return ret == 0 # Returns true if "Yes" (index 0) was picked
+end
+
+#def pbMessage(message)
+  # Change "speech bw" to whichever windowskin you prefer from Graphics/Windowskins/
+ # msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+  #pbMessageDisplay(msgwindow, message)
+  #pbDisposeMessageWindow(msgwindow)
+  #Input.update
+#end
+
 #===============================================================================
 # Change a Pokémon's level
 #===============================================================================
-def pbChangeLevel(pkmn, new_level, scene)
+def pbChangeLevel(pkmn, new_level, scene, &block)
   new_level = new_level.clamp(1, GameData::GrowthRate.max_level)
   if pkmn.level == new_level
     if scene.is_a?(PokemonPartyScreen)
-      scene.pbDisplay(_INTL("{1}'s level remained unchanged.", pkmn.name))
+      self.pbDisplay(_INTL("{1}'s level remained unchanged.", pkmn.name))
     else
-      pbMessage(_INTL("{1}'s level remained unchanged.", pkmn.name))
+      self.pbDisplay(_INTL("{1}'s level remained unchanged.", pkmn.name))
     end
     return
   end
@@ -152,9 +187,9 @@ def pbChangeLevel(pkmn, new_level, scene)
   scene.pbRefresh
   if old_level > new_level
     if scene.is_a?(PokemonPartyScreen)
-      scene.pbDisplay(_INTL("{1} dropped to Lv. {2}!", pkmn.name, pkmn.level))
+      self.pbDisplay(_INTL("{1} dropped to Lv. {2}!", pkmn.name, pkmn.level))
     else
-      pbMessage(_INTL("{1} dropped to Lv. {2}!", pkmn.name, pkmn.level))
+      self.pbDisplay(_INTL("{1} dropped to Lv. {2}!", pkmn.name, pkmn.level))
     end
     total_hp_diff        = pkmn.totalhp - old_total_hp
     attack_diff          = pkmn.attack - old_attack
@@ -169,9 +204,13 @@ def pbChangeLevel(pkmn, new_level, scene)
   else
     pkmn.changeHappiness("vitamin")
     if scene.is_a?(PokemonPartyScreen)
-      scene.pbDisplay(_INTL("{1} grew to Lv. {2}!", pkmn.name, pkmn.level))
+	
+      self.pbDisplay("\\se[]" + _INTL("{1} grew to Lv. {2}!", pkmn.name, pkmn.level) + "\\se[Pkmn move learnt]", &block)
+	  
     else
-      pbMessage(_INTL("{1} grew to Lv. {2}!", pkmn.name, pkmn.level))
+	
+      self.pbDisplay("\\se[]" + _INTL("{1} grew to Lv. {2}!", pkmn.name, pkmn.level) + "\\se[Pkmn move learnt]", &block)
+	  
     end
     total_hp_diff        = pkmn.totalhp - old_total_hp
     attack_diff          = pkmn.attack - old_attack
@@ -220,13 +259,13 @@ def pbTopRightWindow(text, scene = nil)
   window.dispose
 end
 
-def pbChangeExp(pkmn, new_exp, scene)
+def pbChangeExp(pkmn, new_exp, scene, &block)
   new_exp = new_exp.clamp(0, pkmn.growth_rate.maximum_exp)
   if pkmn.exp == new_exp
     if scene.is_a?(PokemonPartyScreen)
-      scene.pbDisplay(_INTL("{1}'s Exp. Points remained unchanged.", pkmn.name))
+      self.pbDisplay(_INTL("{1}'s Exp. Points remained unchanged.", pkmn.name))
     else
-      pbMessage(_INTL("{1}'s Exp. Points remained unchanged.", pkmn.name))
+      self.pbDisplay(_INTL("{1}'s Exp. Points remained unchanged.", pkmn.name))
     end
     return
   end
@@ -240,9 +279,9 @@ def pbChangeExp(pkmn, new_exp, scene)
   if pkmn.exp > new_exp   # Loses Exp
     difference = pkmn.exp - new_exp
     if scene.is_a?(PokemonPartyScreen)
-      scene.pbDisplay(_INTL("{1} lost {2} Exp. Points!", pkmn.name, difference))
+      self.pbDisplay(_INTL("{1} lost {2} Exp. Points!", pkmn.name, difference))
     else
-      pbMessage(_INTL("{1} lost {2} Exp. Points!", pkmn.name, difference))
+      self.pbDisplay(_INTL("{1} lost {2} Exp. Points!", pkmn.name, difference))
     end
     pkmn.exp = new_exp
     pkmn.calc_stats
@@ -250,9 +289,9 @@ def pbChangeExp(pkmn, new_exp, scene)
     return if pkmn.level == old_level
     # Level changed
     if scene.is_a?(PokemonPartyScreen)
-      scene.pbDisplay(_INTL("{1} dropped to Lv. {2}!", pkmn.name, pkmn.level))
+      self.pbDisplay(_INTL("{1} dropped to Lv. {2}!", pkmn.name, pkmn.level))
     else
-      pbMessage(_INTL("{1} dropped to Lv. {2}!", pkmn.name, pkmn.level))
+      self.pbDisplay(_INTL("{1} dropped to Lv. {2}!", pkmn.name, pkmn.level))
     end
     total_hp_diff        = pkmn.totalhp - old_total_hp
     attack_diff          = pkmn.attack - old_attack
@@ -267,9 +306,9 @@ def pbChangeExp(pkmn, new_exp, scene)
   else   # Gains Exp
     difference = new_exp - pkmn.exp
     if scene.is_a?(PokemonPartyScreen)
-      scene.pbDisplay(_INTL("{1} gained {2} Exp. Points!", pkmn.name, difference))
+      self.pbDisplay(_INTL("{1} gained {2} Exp. Points!", pkmn.name, difference))
     else
-      pbMessage(_INTL("{1} gained {2} Exp. Points!", pkmn.name, difference))
+      self.pbDisplay(_INTL("{1} gained {2} Exp. Points!", pkmn.name, difference))
     end
     pkmn.exp = new_exp
     pkmn.changeHappiness("vitamin")
@@ -278,9 +317,13 @@ def pbChangeExp(pkmn, new_exp, scene)
     return if pkmn.level == old_level
     # Level changed
     if scene.is_a?(PokemonPartyScreen)
-      scene.pbDisplay(_INTL("{1} grew to Lv. {2}!", pkmn.name, pkmn.level))
+	
+      self.pbDisplay("\\se[]" + _INTL("{1} grew to Lv. {2}!", pkmn.name, pkmn.level) + "\\se[Pkmn move learnt]", &block)
+	  
     else
-      pbMessage(_INTL("{1} grew to Lv. {2}!", pkmn.name, pkmn.level))
+	
+      self.pbDisplay("\\se[]" + _INTL("{1} grew to Lv. {2}!", pkmn.name, pkmn.level) + "\\se[Pkmn move learnt]", &block)
+	  
     end
     total_hp_diff        = pkmn.totalhp - old_total_hp
     attack_diff          = pkmn.attack - old_attack
@@ -312,12 +355,12 @@ def pbChangeExp(pkmn, new_exp, scene)
   end
 end
 
-def pbGainExpFromExpCandy(pkmn, base_amt, qty, scene)
+def pbGainExpFromExpCandy(pkmn, base_amt, qty, scene, &block)
   if pkmn.level >= GameData::GrowthRate.max_level || pkmn.shadowPokemon?
-    scene.pbDisplay(_INTL("It won't have any effect."))
+    self.pbDisplay(_INTL("It won't have any effect."))
     return false
   end
-  pbSEPlay("Pkmn level up")
+  #pbMEPlay("Pkmn level up")
   scene.scene.pbSetHelpText("") if scene.is_a?(PokemonPartyScreen)
   if qty > 1
     (qty - 1).times { pkmn.changeHappiness("vitamin") }
@@ -340,23 +383,23 @@ end
 
 def pbHPItem(pkmn, restoreHP, scene)
   if !pkmn.able? || pkmn.hp == pkmn.totalhp
-    scene.pbDisplay(_INTL("It won't have any effect."))
+    self.pbDisplay(_INTL("It won't have any effect."))
     return false
   end
   pbSEPlay("Use item in party")
   hpGain = pbItemRestoreHP(pkmn, restoreHP)
   scene.pbRefresh
-  scene.pbDisplay(_INTL("{1}'s HP was restored by {2} points.", pkmn.name, hpGain))
+  self.pbDisplay(_INTL("{1}'s HP was restored by {2} points.", pkmn.name, hpGain))
   return true
 end
 
 def pbBattleHPItem(pkmn, battler, restoreHP, scene)
   if battler
     if battler.pbRecoverHP(restoreHP) > 0
-      scene.pbDisplay(_INTL("{1}'s HP was restored.", battler.pbThis))
+      self.pbDisplay(_INTL("{1}'s HP was restored.", battler.pbThis))
     end
   elsif pbItemRestoreHP(pkmn, restoreHP) > 0
-    scene.pbDisplay(_INTL("{1}'s HP was restored.", pkmn.name))
+    self.pbDisplay(_INTL("{1}'s HP was restored.", pkmn.name))
   end
   return true
 end
@@ -433,12 +476,12 @@ def pbUseEVRaisingItem(stat, amt_per_use, qty, pkmn, happiness_type, scene, no_e
     end
   end
   if !ret
-    scene.pbDisplay(_INTL("It won't have any effect."))
+    self.pbDisplay(_INTL("It won't have any effect."))
     return false
   end
   pbSEPlay("Use item in party")
   scene.pbRefresh
-  scene.pbDisplay(_INTL("{1}'s {2} increased.", pkmn.name, GameData::Stat.get(stat).name))
+  self.pbDisplay(_INTL("{1}'s {2} increased.", pkmn.name, GameData::Stat.get(stat).name))
   return true
 end
 
@@ -467,7 +510,7 @@ def pbRaiseHappinessAndLowerEV(pkmn, scene, stat, qty, messages)
   h = pkmn.happiness < 255
   e = pkmn.ev[stat] > 0
   if !h && !e
-    scene.pbDisplay(_INTL("It won't have any effect."))
+    self.pbDisplay(_INTL("It won't have any effect."))
     return false
   end
   if h
@@ -479,7 +522,7 @@ def pbRaiseHappinessAndLowerEV(pkmn, scene, stat, qty, messages)
     pkmn.calc_stats
   end
   scene.pbRefresh
-  scene.pbDisplay(messages[2 - (h ? 0 : 2) - (e ? 0 : 1)])
+  self.pbDisplay(messages[2 - (h ? 0 : 2) - (e ? 0 : 1)])
   return true
 end
 
@@ -488,16 +531,16 @@ end
 #===============================================================================
 def pbNatureChangingMint(new_nature, item, pkmn, scene)
   if pkmn.nature_for_stats == new_nature
-    scene.pbDisplay(_INTL("It won't have any effect."))
+    self.pbDisplay(_INTL("It won't have any effect."))
     return false
   end
-  if !scene.pbConfirm(_INTL("It might affect {1}'s stats. Are you sure you want to use it?", pkmn.name))
+  if !pbConfirm(_INTL("It might affect {1}'s stats. Are you sure you want to use it?", pkmn.name))
     return false
   end
   pkmn.nature_for_stats = new_nature
   pkmn.calc_stats
   scene.pbRefresh
-  scene.pbDisplay(_INTL("{1}'s stats may have changed due to the effects of the {2}!",
+  self.pbDisplay(_INTL("{1}'s stats may have changed due to the effects of the {2}!",
                         pkmn.name, GameData::Item.get(item).name))
   return true
 end
@@ -507,7 +550,7 @@ end
 #===============================================================================
 def pbBattleItemCanCureStatus?(status, pkmn, scene, showMessages)
   if !pkmn.able? || pkmn.status != status
-    scene.pbDisplay(_INTL("It won't have any effect.")) if showMessages
+    self.pbDisplay(_INTL("It won't have any effect.")) if showMessages
     return false
   end
   return true
@@ -515,7 +558,7 @@ end
 
 def pbBattleItemCanRaiseStat?(stat, battler, scene, showMessages)
   if !battler || !battler.pbCanRaiseStatStage?(stat, battler)
-    scene.pbDisplay(_INTL("It won't have any effect.")) if showMessages
+    self.pbDisplay(_INTL("It won't have any effect.")) if showMessages
     return false
   end
   return true
@@ -528,23 +571,23 @@ def pbBikeCheck
   if $PokemonGlobal.surfing || $PokemonGlobal.diving ||
      (!$PokemonGlobal.bicycle &&
      ($game_player.pbTerrainTag.must_walk || $game_player.pbTerrainTag.must_walk_or_run))
-    pbMessage(_INTL("Can't use that here."))
+    self.pbDisplay(_INTL("Can't use that here."))
     return false
   end
   if !$game_player.can_ride_vehicle_with_follower?
-    pbMessage(_INTL("It can't be used when you have someone with you."))
+    self.pbDisplay(_INTL("It can't be used when you have someone with you."))
     return false
   end
   map_metadata = $game_map.metadata
   if $PokemonGlobal.bicycle
     if map_metadata&.always_bicycle
-      pbMessage(_INTL("You can't dismount your Bike here."))
+      self.pbDisplay(_INTL("You can't dismount your Bike here."))
       return false
     end
     return true
   end
   if !map_metadata || (!map_metadata.can_bicycle && !map_metadata.outdoor_map)
-    pbMessage(_INTL("Can't use that here."))
+    self.pbDisplay(_INTL("Can't use that here."))
     return false
   end
   return true
@@ -583,25 +626,25 @@ def pbLearnMove(pkmn, move, ignore_if_known = false, by_machine = false, &block)
   return false if !pkmn
   move = GameData::Move.get(move).id
   if pkmn.egg? && !$DEBUG
-    pbMessage(_INTL("Eggs can't be taught any moves."), &block)
+    self.pbDisplay(_INTL("Eggs can't be taught any moves."), &block)
     return false
   elsif pkmn.shadowPokemon?
-    pbMessage(_INTL("Shadow Pokémon can't be taught any moves."), &block)
+    self.pbDisplay(_INTL("Shadow Pokémon can't be taught any moves."), &block)
     return false
   end
   pkmn_name = pkmn.name
   move_name = GameData::Move.get(move).name
   if pkmn.hasMove?(move)
-    pbMessage(_INTL("{1} already knows {2}.", pkmn_name, move_name), &block) if !ignore_if_known
+    self.pbDisplay(_INTL("{1} already knows {2}.", pkmn_name, move_name), &block) if !ignore_if_known
     return false
   elsif pkmn.numMoves < Pokemon::MAX_MOVES
     pkmn.learn_move(move)
-    pbMessage("\\se[]" + _INTL("{1} learned {2}!", pkmn_name, move_name) + "\\se[Pkmn move learnt]", &block)
+    self.pbDisplay("\\se[]" + _INTL("{1} learned {2}!", pkmn_name, move_name) + "\\se[Pkmn move learnt]", &block)
     return true
   end
-  pbMessage(_INTL("{1} wants to learn {2}, but it already knows {3} moves.",
+  self.pbDisplay(_INTL("{1} wants to learn {2}, but it already knows {3} moves.",
                   pkmn_name, move_name, pkmn.numMoves.to_word) + "\1", &block)
-  if pbConfirmMessage(_INTL("Should {1} forget a move to learn {2}?", pkmn_name, move_name), &block)
+  if pbConfirm(_INTL("Should {1} forget a move to learn {2}?", pkmn_name, move_name), &block)
     loop do
       move_index = pbForgetMove(pkmn, move)
       if move_index >= 0
@@ -611,18 +654,18 @@ def pbLearnMove(pkmn, move, ignore_if_known = false, by_machine = false, &block)
         if by_machine && Settings::TAUGHT_MACHINES_KEEP_OLD_PP
           pkmn.moves[move_index].pp = [oldmovepp, pkmn.moves[move_index].total_pp].min
         end
-        pbMessage(_INTL("1, 2, and...\\wt[16] ...\\wt[16] ...\\wt[16] Ta-da!") + "\\se[Battle ball drop]\1", &block)
-        pbMessage(_INTL("{1} forgot how to use {2}.\\nAnd..." + "\1", pkmn_name, old_move_name), &block)
-        pbMessage("\\se[]" + _INTL("{1} learned {2}!", pkmn_name, move_name) + "\\se[Pkmn move learnt]", &block)
+        self.pbDisplay(_INTL("1, 2, and...\\wt[16] ...\\wt[16] ...\\wt[16] Ta-da!") + "\\se[Battle ball drop]\1", &block)
+        self.pbDisplay(_INTL("{1} forgot how to use {2}.\\nAnd..." + "\1", pkmn_name, old_move_name), &block)
+        self.pbDisplay("\\se[]" + _INTL("{1} learned {2}!", pkmn_name, move_name) + "\\se[Pkmn move learnt]", &block)
         pkmn.changeHappiness("machine") if by_machine
         return true
-      elsif pbConfirmMessage(_INTL("Give up on learning {1}?", move_name), &block)
-        pbMessage(_INTL("{1} did not learn {2}.", pkmn_name, move_name), &block)
+      elsif pbConfirm(_INTL("Give up on learning {1}?", move_name), &block)
+        self.pbDisplay(_INTL("{1} did not learn {2}.", pkmn_name, move_name), &block)
         return false
       end
     end
   else
-    pbMessage(_INTL("{1} did not learn {2}.", pkmn_name, move_name), &block)
+    self.pbDisplay(_INTL("{1} did not learn {2}.", pkmn_name, move_name), &block)
   end
   return false
 end
@@ -646,7 +689,7 @@ def pbUseItem(bag, item, bagscene = nil)
   useType = itm.field_use
   if useType == 1   # Item is usable on a Pokémon
     if $player.pokemon_count == 0
-      pbMessage(_INTL("There is no Pokémon."))
+      self.pbDisplay(_INTL("There is no Pokémon."))
       return 0
     end
     ret = false
@@ -685,7 +728,7 @@ def pbUseItem(bag, item, bagscene = nil)
         next unless ret && itm.consumed_after_use?
         bag.remove(item, qty)
         next if bag.has?(item)
-        pbMessage(_INTL("You used your last {1}.", itm.portion_name)) { screen.pbUpdate }
+        self.pbDisplay(_INTL("You used your last {1}.", itm.portion_name)) { screen.pbUpdate }
         break
       end
       screen.pbEndScene
@@ -698,10 +741,10 @@ def pbUseItem(bag, item, bagscene = nil)
       bag.remove(item) if intret == 1 && itm.consumed_after_use?
       return intret
     end
-    pbMessage(_INTL("Can't use that here."))
+    self.pbDisplay(_INTL("Can't use that here."))
     return 0
   end
-  pbMessage(_INTL("Can't use that here."))
+  self.pbDisplay(_INTL("Can't use that here."))
   return 0
 end
 
@@ -715,12 +758,12 @@ def pbUseItemOnPokemon(item, pkmn, scene)
     return false if !machine
     movename = GameData::Move.get(machine).name
     if pkmn.shadowPokemon?
-      pbMessage(_INTL("Shadow Pokémon can't be taught any moves.")) { scene.pbUpdate }
+      self.pbDisplay(_INTL("Shadow Pokémon can't be taught any moves.")) { scene.pbUpdate }
     elsif !pkmn.compatible_with_move?(machine)
-      pbMessage(_INTL("{1} can't learn {2}.", pkmn.name, movename)) { scene.pbUpdate }
+      self.pbDisplay(_INTL("{1} can't learn {2}.", pkmn.name, movename)) { scene.pbUpdate }
     else
-      pbMessage("\\se[PC access]" + _INTL("You booted up the {1}.", itm.portion_name) + "\1") { scene.pbUpdate }
-      if pbConfirmMessage(_INTL("Do you want to teach {1} to {2}?", movename, pkmn.name)) { scene.pbUpdate }
+      self.pbDisplay("\\se[PC access]" + _INTL("You booted up the {1}.", itm.portion_name) + "\1") { scene.pbUpdate }
+      if pbConfirm(_INTL("Do you want to teach {1} to {2}?", movename, pkmn.name)) { scene.pbUpdate }
         if pbLearnMove(pkmn, machine, false, true) { scene.pbUpdate }
           $bag.remove(item) if itm.consumed_after_use?
           return true
@@ -746,7 +789,7 @@ def pbUseItemOnPokemon(item, pkmn, scene)
   if ret && itm.consumed_after_use?
     $bag.remove(item, qty)
     if !$bag.has?(item)
-      pbMessage(_INTL("You used your last {1}.", itm.portion_name)) { scene.pbUpdate }
+      self.pbDisplay(_INTL("You used your last {1}.", itm.portion_name)) { scene.pbUpdate }
     end
   end
   return ret
@@ -755,7 +798,7 @@ end
 def pbUseKeyItemInField(item)
   ret = ItemHandlers.triggerUseInField(item)
   if ret == -1   # Item effect not found
-    pbMessage(_INTL("Can't use that here."))
+    self.pbDisplay(_INTL("Can't use that here."))
   elsif ret > 0 && GameData::Item.get(item).consumed_after_use?
     $bag.remove(item)
   end
@@ -765,9 +808,9 @@ end
 def pbUseItemMessage(item)
   itemname = GameData::Item.get(item).portion_name
   if itemname.starts_with_vowel?
-    pbMessage(_INTL("You used an {1}.", itemname))
+    self.pbDisplay(_INTL("You used an {1}.", itemname))
   else
-    pbMessage(_INTL("You used a {1}.", itemname))
+    self.pbDisplay(_INTL("You used a {1}.", itemname))
   end
 end
 
@@ -781,42 +824,42 @@ end
 def pbGiveItemToPokemon(item, pkmn, scene, pkmnid = 0)
   newitemname = GameData::Item.get(item).portion_name
   if pkmn.egg?
-    scene.pbDisplay(_INTL("Eggs can't hold items."))
+    self.pbDisplay(_INTL("Eggs can't hold items."))
     return false
   elsif pkmn.mail
-    scene.pbDisplay(_INTL("{1}'s mail must be removed before giving it an item.", pkmn.name))
+    self.pbDisplay(_INTL("{1}'s mail must be removed before giving it an item.", pkmn.name))
     return false if !pbTakeItemFromPokemon(pkmn, scene)
   end
   if pkmn.hasItem?
     olditemname = pkmn.item.portion_name
     if newitemname.starts_with_vowel?
-      scene.pbDisplay(_INTL("{1} is already holding an {2}.", pkmn.name, olditemname) + "\1")
+      self.pbDisplay(_INTL("{1} is already holding an {2}.", pkmn.name, olditemname) + "\1")
     else
-      scene.pbDisplay(_INTL("{1} is already holding a {2}.", pkmn.name, olditemname) + "\1")
+      self.pbDisplay(_INTL("{1} is already holding a {2}.", pkmn.name, olditemname) + "\1")
     end
-    if scene.pbConfirm(_INTL("Would you like to switch the two items?"))
+    if pbConfirm(_INTL("Would you like to switch the two items?"), scene)
       $bag.remove(item)
       if !$bag.add(pkmn.item)
         raise _INTL("Couldn't re-store deleted item in Bag somehow") if !$bag.add(item)
-        scene.pbDisplay(_INTL("The Bag is full. The Pokémon's item could not be removed."))
+        self.pbDisplay(_INTL("The Bag is full. The Pokémon's item could not be removed."))
       elsif GameData::Item.get(item).is_mail?
         if pbWriteMail(item, pkmn, pkmnid, scene)
           pkmn.item = item
-          scene.pbDisplay(_INTL("Took the {1} from {2} and gave it the {3}.", olditemname, pkmn.name, newitemname))
+          self.pbDisplay(_INTL("Took the {1} from {2} and gave it the {3}.", olditemname, pkmn.name, newitemname))
           return true
         elsif !$bag.add(item)
           raise _INTL("Couldn't re-store deleted item in Bag somehow")
         end
       else
         pkmn.item = item
-        scene.pbDisplay(_INTL("Took the {1} from {2} and gave it the {3}.", olditemname, pkmn.name, newitemname))
+        self.pbDisplay(_INTL("Took the {1} from {2} and gave it the {3}.", olditemname, pkmn.name, newitemname))
         return true
       end
     end
   elsif !GameData::Item.get(item).is_mail? || pbWriteMail(item, pkmn, pkmnid, scene)
     $bag.remove(item)
     pkmn.item = item
-    scene.pbDisplay(_INTL("{1} is now holding the {2}.", pkmn.name, newitemname))
+    self.pbDisplay(_INTL("{1} is now holding the {2}.", pkmn.name, newitemname))
     return true
   end
   return false
@@ -825,28 +868,28 @@ end
 def pbTakeItemFromPokemon(pkmn, scene)
   ret = false
   if !pkmn.hasItem?
-    scene.pbDisplay(_INTL("{1} isn't holding anything.", pkmn.name))
+    self.pbDisplay(_INTL("{1} isn't holding anything.", pkmn.name))
   elsif !$bag.can_add?(pkmn.item)
-    scene.pbDisplay(_INTL("The Bag is full. The Pokémon's item could not be removed."))
+    self.pbDisplay(_INTL("The Bag is full. The Pokémon's item could not be removed."))
   elsif pkmn.mail
-    if scene.pbConfirm(_INTL("Save the removed mail in your PC?"))
+    if pbConfirm(_INTL("Save the removed mail in your PC?"))
       if pbMoveToMailbox(pkmn)
-        scene.pbDisplay(_INTL("The mail was saved in your PC."))
+        self.pbDisplay(_INTL("The mail was saved in your PC."))
         pkmn.item = nil
         ret = true
       else
-        scene.pbDisplay(_INTL("Your PC's Mailbox is full."))
+        self.pbDisplay(_INTL("Your PC's Mailbox is full."))
       end
-    elsif scene.pbConfirm(_INTL("If the mail is removed, its message will be lost. OK?"))
+    elsif pbConfirm(_INTL("If the mail is removed, its message will be lost. OK?"))
       $bag.add(pkmn.item)
-      scene.pbDisplay(_INTL("Received the {1} from {2}.", pkmn.item.portion_name, pkmn.name))
+      self.pbDisplay(_INTL("Received the {1} from {2}.", pkmn.item.portion_name, pkmn.name))
       pkmn.item = nil
       pkmn.mail = nil
       ret = true
     end
   else
     $bag.add(pkmn.item)
-    scene.pbDisplay(_INTL("Received the {1} from {2}.", pkmn.item.portion_name, pkmn.name))
+    self.pbDisplay(_INTL("Received the {1} from {2}.", pkmn.item.portion_name, pkmn.name))
     pkmn.item = nil
     ret = true
   end

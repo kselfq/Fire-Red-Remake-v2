@@ -672,7 +672,7 @@ class Interpreter
     Settings::SPEECH_WINDOWSKINS.length.times do |i|
       next if Settings::SPEECH_WINDOWSKINS[i] != @parameters[0]
       $PokemonSystem.textskin = i
-      MessageConfig.pbSetSpeechFrame("Graphics/Windowskins/" + Settings::SPEECH_WINDOWSKINS[i])
+      MessageConfig.pbSetSpeechFrame("Graphics/Windowskins/speech rs")
       return true
     end
     return true

@@ -53,8 +53,6 @@ Name = Poké Flute
 NamePlural = Poké Flutes
 Pocket = 8
 Price = 0
-FieldUse = OnPokemon
-BattleUse = Direct
 Flags = KeyItem
 Description = A flute that is said to instantly awaken any Pokémon. It has a lovely tone.
 

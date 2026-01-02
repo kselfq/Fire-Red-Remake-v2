@@ -1,6 +1,14 @@
 #===============================================================================
 #
 #===============================================================================
+def pbDisplay(message)
+  # Change "speech bw" to whichever windowskin you prefer from Graphics/Windowskins/
+  msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+  pbMessageDisplay(msgwindow, message)
+  pbDisposeMessageWindow(msgwindow)
+  Input.update
+end 
+
 def pbPCItemStorage
   command = 0
   loop do
@@ -19,7 +27,7 @@ def pbPCItemStorage
         $PokemonGlobal.pcItemStorage = PCItemStorage.new
       end
       if $PokemonGlobal.pcItemStorage.empty?
-        pbMessage(_INTL("There are no items."))
+        pbDisplay(_INTL("There are no items."))
       else
         pbFadeOutIn do
           scene = WithdrawItemScene.new
@@ -38,7 +46,7 @@ def pbPCItemStorage
         $PokemonGlobal.pcItemStorage = PCItemStorage.new
       end
       if $PokemonGlobal.pcItemStorage.empty?
-        pbMessage(_INTL("There are no items."))
+        pbDisplay(_INTL("There are no items."))
       else
         pbFadeOutIn do
           scene = TossItemScene.new
@@ -57,7 +65,7 @@ end
 #===============================================================================
 def pbPCMailbox
   if !$PokemonGlobal.mailbox || $PokemonGlobal.mailbox.length == 0
-    pbMessage(_INTL("There's no Mail here."))
+    pbDisplay(_INTL("There's no Mail here."))
   else
     loop do
       command = 0
@@ -84,10 +92,10 @@ def pbPCMailbox
         when 1   # Move to Bag
           if pbConfirmMessage(_INTL("The message will be lost. Is that OK?"))
             if $bag.add($PokemonGlobal.mailbox[mailIndex].item)
-              pbMessage(_INTL("The Mail was returned to the Bag with its message erased."))
+              pbDisplay(_INTL("The Mail was returned to the Bag with its message erased."))
               $PokemonGlobal.mailbox.delete_at(mailIndex)
             else
-              pbMessage(_INTL("The Bag is full."))
+              pbDisplay(_INTL("The Bag is full."))
             end
           end
         when 2   # Give
@@ -109,7 +117,7 @@ end
 #===============================================================================
 def pbTrainerPC
   # The initial boot-up message remains
-  pbMessage("\\se[PC open]" + _INTL("{1} booted up the PC.", $player.name))
+  pbDisplay("\\se[PC open]" + _INTL("{1} booted up the PC.", $player.name))
   
   # DIRECTLY call Item Storage (skipping the Item Storage/Mailbox/Turn Off menu)
   pbPCItemStorage
@@ -137,7 +145,7 @@ end
 #
 #===============================================================================
 def pbPokeCenterPC
-  pbMessage("\\se[PC open]" + _INTL("{1} booted up the PC.", $player.name))
+  pbDisplay("\\se[PC open]" + _INTL("{1} booted up the PC.", $player.name))
   # Get all commands
   command_list = []
   commands = []
@@ -171,7 +179,7 @@ MenuHandlers.add(:pc_menu, :pokemon_storage, {
   },
   "order"     => 10,
   "effect"    => proc { |menu|
-    pbMessage("\\se[PC access]" + _INTL("The Pokémon Storage System was opened."))
+    pbDisplay("\\se[PC access]" + _INTL("The Pokémon Storage System was opened."))
     
     # DIRECTLY OPEN ORGANIZE BOXES (skipping the Withdraw/Deposit menu)
     pbFadeOutIn do
@@ -188,7 +196,7 @@ MenuHandlers.add(:pc_menu, :player_pc, {
   "name"      => proc { next _INTL("{1}'s PC", $player.name) },
   "order"     => 20,
   "effect"    => proc { |menu|
-    pbMessage("\\se[PC access]" + _INTL("Accessed {1}'s PC.", $player.name))
+    pbDisplay("\\se[PC access]" + _INTL("Accessed {1}'s PC.", $player.name))
     
     # We call pbPCItemStorage directly instead of pbTrainerPCMenu
     pbPCItemStorage 

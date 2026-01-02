@@ -381,7 +381,7 @@ module Settings
 
   # Available speech frames. These are graphic files in "Graphics/Windowskins/".
   SPEECH_WINDOWSKINS = [
-    "speech pl 20"
+    "speech rs"
   ]
 
   # Available menu frames. These are graphic files in "Graphics/Windowskins/".

@@ -30,13 +30,13 @@ ItemHandlers::UseFromBag.add(:HONEY, proc { |item|
 
 ItemHandlers::UseFromBag.add(:ESCAPEROPE, proc { |item|
   if !$game_player.can_map_transfer_with_follower?
-    pbMessage(_INTL("It can't be used when you have someone with you."))
+    pbDisplay(_INTL("It can't be used when you have someone with you."))
     next 0
   end
   if ($PokemonGlobal.escapePoint rescue false) && $PokemonGlobal.escapePoint.length > 0
     next 2   # End screen and use item
   end
-  pbMessage(_INTL("Can't use that here."))
+  pbDisplay(_INTL("Can't use that here."))
   next 0
 })
 
@@ -49,7 +49,7 @@ ItemHandlers::UseFromBag.copy(:BICYCLE, :MACHBIKE, :ACROBIKE)
 ItemHandlers::UseFromBag.add(:OLDROD, proc { |item|
   notCliff = $game_map.passable?($game_player.x, $game_player.y, $game_player.direction, $game_player)
   next 2 if $game_player.pbFacingTerrainTag.can_fish && ($PokemonGlobal.surfing || notCliff)
-  pbMessage(_INTL("Can't use that here."))
+  pbDisplay(_INTL("Can't use that here."))
   next 0
 })
 
@@ -76,13 +76,13 @@ ItemHandlers::UseFromBag.addIf(:move_machines,
   proc { |item| GameData::Item.get(item).is_machine? },
   proc { |item|
     if $player.pokemon_count == 0
-      pbMessage(_INTL("There is no Pokémon."))
+      pbDisplay(_INTL("There is no Pokémon."))
       next 0
     end
     item_data = GameData::Item.get(item)
     move = item_data.move
     next 0 if !move
-    pbMessage("\\se[PC access]" + _INTL("You booted up the {1}.", item_data.name) + "\1")
+    pbDisplay("\\se[PC access]" + _INTL("You booted up the {1}.", item_data.name) + "\1")
     next 0 if !pbConfirmMessage(_INTL("Do you want to teach {1} to a Pokémon?",
                                       GameData::Move.get(move).name))
     next 1 if pbMoveTutorChoose(move, nil, true, item_data.is_TR?)
@@ -100,11 +100,11 @@ ItemHandlers::UseFromBag.addIf(:move_machines,
 ItemHandlers::ConfirmUseInField.add(:ESCAPEROPE, proc { |item|
   escape = ($PokemonGlobal.escapePoint rescue nil)
   if !escape || escape == []
-    pbMessage(_INTL("Can't use that here."))
+    pbDisplay(_INTL("Can't use that here."))
     next false
   end
   if !$game_player.can_map_transfer_with_follower?
-    pbMessage(_INTL("It can't be used when you have someone with you."))
+    pbDisplay(_INTL("It can't be used when you have someone with you."))
     next false
   end
   mapname = pbGetMapNameFromId(escape[0])
@@ -119,10 +119,18 @@ ItemHandlers::ConfirmUseInField.add(:ESCAPEROPE, proc { |item|
 # there is no UseFromBag handler above.
 # If an item has this handler, it can be registered to the Ready Menu.
 #===============================================================================
+def pbDisplay(message)
+  # Change "speech bw" to whichever windowskin you prefer from Graphics/Windowskins/
+  msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+  pbMessageDisplay(msgwindow, message)
+  pbDisposeMessageWindow(msgwindow)
+  Input.update
+end 
+
 
 def pbRepel(item, steps)
   if $PokemonGlobal.repel > 0
-    pbMessage(_INTL("But a repellent's effect still lingers from earlier."))
+    pbDisplay(_INTL("But a repellent's effect still lingers from earlier."))
     return false
   end
   pbSEPlay("Repel")
@@ -152,7 +160,7 @@ EventHandlers.add(:on_player_step_taken, :repel_counter,
     repels = []
     GameData::Item.each { |itm| repels.push(itm.id) if itm.has_flag?("Repel") }
     if repels.none? { |item| $bag.has?(item) }
-      pbMessage(_INTL("The repellent's effect wore off!"))
+      pbDisplay(_INTL("The repellent's effect wore off!"))
       next
     end
     next if !pbConfirmMessage(_INTL("The repellent's effect wore off! Would you like to use another one?"))
@@ -169,11 +177,11 @@ EventHandlers.add(:on_player_step_taken, :repel_counter,
 ItemHandlers::UseInField.add(:BLACKFLUTE, proc { |item|
   pbUseItemMessage(item)
   if Settings::FLUTES_CHANGE_WILD_ENCOUNTER_LEVELS
-    pbMessage(_INTL("Now you're more likely to encounter high-level Pokémon!"))
+    pbDisplay(_INTL("Now you're more likely to encounter high-level Pokémon!"))
     $PokemonMap.higher_level_wild_pokemon = true
     $PokemonMap.lower_level_wild_pokemon = false
   else
-    pbMessage(_INTL("The likelihood of encountering Pokémon decreased!"))
+    pbDisplay(_INTL("The likelihood of encountering Pokémon decreased!"))
     $PokemonMap.lower_encounter_rate = true
     $PokemonMap.higher_encounter_rate = false
   end
@@ -183,11 +191,11 @@ ItemHandlers::UseInField.add(:BLACKFLUTE, proc { |item|
 ItemHandlers::UseInField.add(:WHITEFLUTE, proc { |item|
   pbUseItemMessage(item)
   if Settings::FLUTES_CHANGE_WILD_ENCOUNTER_LEVELS
-    pbMessage(_INTL("Now you're more likely to encounter low-level Pokémon!"))
+    pbDisplay(_INTL("Now you're more likely to encounter low-level Pokémon!"))
     $PokemonMap.lower_level_wild_pokemon = true
     $PokemonMap.higher_level_wild_pokemon = false
   else
-    pbMessage(_INTL("The likelihood of encountering Pokémon increased!"))
+    pbDisplay(_INTL("The likelihood of encountering Pokémon increased!"))
     $PokemonMap.higher_encounter_rate = true
     $PokemonMap.lower_encounter_rate = false
   end
@@ -203,11 +211,11 @@ ItemHandlers::UseInField.add(:HONEY, proc { |item|
 ItemHandlers::UseInField.add(:ESCAPEROPE, proc { |item|
   escape = ($PokemonGlobal.escapePoint rescue nil)
   if !escape || escape == []
-    pbMessage(_INTL("Can't use that here."))
+    pbDisplay(_INTL("Can't use that here."))
     next false
   end
   if !$game_player.can_map_transfer_with_follower?
-    pbMessage(_INTL("It can't be used when you have someone with you."))
+    pbDisplay(_INTL("It can't be used when you have someone with you."))
     next false
   end
   pbUseItemMessage(item)
@@ -227,7 +235,7 @@ ItemHandlers::UseInField.add(:ESCAPEROPE, proc { |item|
 
 ItemHandlers::UseInField.add(:SACREDASH, proc { |item|
   if $player.pokemon_count == 0
-    pbMessage(_INTL("There is no Pokémon."))
+    pbDisplay(_INTL("There is no Pokémon."))
     next false
   end
   canrevive = false
@@ -237,7 +245,7 @@ ItemHandlers::UseInField.add(:SACREDASH, proc { |item|
     break
   end
   if !canrevive
-    pbMessage(_INTL("It won't have any effect."))
+    pbDisplay(_INTL("It won't have any effect."))
     next false
   end
   revived = 0
@@ -276,7 +284,7 @@ ItemHandlers::UseInField.copy(:BICYCLE, :MACHBIKE, :ACROBIKE)
 ItemHandlers::UseInField.add(:OLDROD, proc { |item|
   notCliff = $game_map.passable?($game_player.x, $game_player.y, $game_player.direction, $game_player)
   if !$game_player.pbFacingTerrainTag.can_fish || (!$PokemonGlobal.surfing && !notCliff)
-    pbMessage(_INTL("Can't use that here."))
+    pbDisplay(_INTL("Can't use that here."))
     next false
   end
   encounter = $PokemonEncounters.has_encounter_type?(:OldRod)
@@ -290,7 +298,7 @@ ItemHandlers::UseInField.add(:OLDROD, proc { |item|
 ItemHandlers::UseInField.add(:GOODROD, proc { |item|
   notCliff = $game_map.passable?($game_player.x, $game_player.y, $game_player.direction, $game_player)
   if !$game_player.pbFacingTerrainTag.can_fish || (!$PokemonGlobal.surfing && !notCliff)
-    pbMessage(_INTL("Can't use that here."))
+    pbDisplay(_INTL("Can't use that here."))
     next false
   end
   encounter = $PokemonEncounters.has_encounter_type?(:GoodRod)
@@ -304,7 +312,7 @@ ItemHandlers::UseInField.add(:GOODROD, proc { |item|
 ItemHandlers::UseInField.add(:SUPERROD, proc { |item|
   notCliff = $game_map.passable?($game_player.x, $game_player.y, $game_player.direction, $game_player)
   if !$game_player.pbFacingTerrainTag.can_fish || (!$PokemonGlobal.surfing && !notCliff)
-    pbMessage(_INTL("Can't use that here."))
+    pbDisplay(_INTL("Can't use that here."))
     next false
   end
   encounter = $PokemonEncounters.has_encounter_type?(:SuperRod)
@@ -320,7 +328,7 @@ ItemHandlers::UseInField.add(:ITEMFINDER, proc { |item|
   pbSEPlay("Itemfinder")
   event = pbClosestHiddenItem
   if !event
-    pbMessage(_INTL("... \\wt[10]... \\wt[10]... \\wt[10]... \\wt[10]Nope! There's no response."))
+    pbDisplay(_INTL("... \\wt[10]... \\wt[10]... \\wt[10]... \\wt[10]Nope! There's no response."))
     next true
   end
   offsetX = event.x - $game_player.x
@@ -331,7 +339,7 @@ ItemHandlers::UseInField.add(:ITEMFINDER, proc { |item|
       $game_player.turn_right_90
     end
     pbWait(0.3)
-    pbMessage(_INTL("The {1}'s indicating something right underfoot!", GameData::Item.get(item).name))
+    pbDisplay(_INTL("The {1}'s indicating something right underfoot!", GameData::Item.get(item).name))
   else   # Item is nearby, face towards it
     direction = $game_player.direction
     if offsetX.abs > offsetY.abs
@@ -346,8 +354,8 @@ ItemHandlers::UseInField.add(:ITEMFINDER, proc { |item|
     when 8 then $game_player.turn_up
     end
     pbWait(0.3)
-    pbMessage(_INTL("Huh? The {1}'s responding!", GameData::Item.get(item).name) + "\1")
-    pbMessage(_INTL("There's an item buried around here!"))
+    pbDisplay(_INTL("Huh? The {1}'s responding!", GameData::Item.get(item).name) + "\1")
+    pbDisplay(_INTL("There's an item buried around here!"))
   end
   next true
 })

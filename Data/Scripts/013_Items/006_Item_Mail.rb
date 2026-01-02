@@ -100,8 +100,8 @@ end
 def pbWriteMail(item, pkmn, pkmnid, scene)
   message = ""
   loop do
-    message = pbMessageFreeText(_INTL("Please enter a message (max. 250 characters)."),
-                                "", false, 250, Graphics.width) { scene.pbUpdate }
+    message = pbMessageFreeText(_INTL("Please enter a message (max. 102 characters)."),
+                                "", false, 102, 512) { scene.pbUpdate }
     if message != ""
       # Store mail if a message was written
       poke1 = poke2 = nil

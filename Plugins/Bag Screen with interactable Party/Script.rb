@@ -677,24 +677,25 @@ class PokemonBag_Scene
     
     # Item text automatically uses Graphics.width, so this stays mostly the same,
     # but we ensure the width calculation uses the dynamic Graphics.width
-    @sprites["itemtext"] = Window_UnformattedTextPokemon.newWithSize(
-      "", 322, 290, 528 , 128, @viewport
-    )
+    @sprites["itemtext"] = Window_UnformattedTextPokemon.newWithSize("", 322, 290, 528 , 128, @viewport)
     @sprites["itemtext"].baseColor   = ITEMTEXTBASECOLOR
     @sprites["itemtext"].shadowColor = ITEMTEXTSHADOWCOLOR
     @sprites["itemtext"].visible     = true
     @sprites["itemtext"].windowskin  = nil
-    @sprites["helpwindow"] = Window_UnformattedTextPokemon.new("")
+	
+    @sprites["helpwindow"] = Window_AdvancedTextPokemon.new("")
     @sprites["helpwindow"].viewport = @viewport
 	@sprites["helpwindow"].visible  = false
-	@sprites["helpwindow"].windowskin = Bitmap.new("Graphics/Windowskins/speech hgss 17")
+	@sprites["helpwindow"].windowskin = Bitmap.new("Graphics/Windowskins/choice 2wss")
     pbBottomLeftLines(@sprites["helpwindow"], 2)
+	
     @sprites["msgwindow"] = Window_AdvancedTextPokemon.new("")
     @sprites["msgwindow"].visible  = false
     @sprites["msgwindow"].viewport = @viewport
     @sprites["msgwindow"].letterbyletter = true
-	@sprites["msgwindow"].windowskin = Bitmap.new("Graphics/Windowskins/speech hgss 17") #this one for items text box
+	@sprites["msgwindow"].windowskin = Bitmap.new("Graphics/Windowskins/speech rs") #this one for items text box
     pbBottomLeftLines(@sprites["msgwindow"], 2)	
+	
     pbUpdateAnnotation
     
     pbDeactivateWindows(@sprites)
@@ -772,39 +773,85 @@ class PokemonBag_Scene
     pbDisposeSpriteHash(@sprites)
     @sliderbitmap.dispose
     @pocketbitmap.dispose
-    @viewport.dispose
+    #@viewport.dispose
   end
 
-  def pbDisplay(text, brief = false)
-    @sprites["msgwindow"].text    = text
-    @sprites["msgwindow"].visible = true
-    pbPlayDecisionSE
-    loop do
-      Graphics.update
-      Input.update
-      pbUpdate
-      if @sprites["msgwindow"].busy?
-        if Input.trigger?(Input::USE)
-          pbPlayDecisionSE if @sprites["msgwindow"].pausing?
-          @sprites["msgwindow"].resume
-        end
-      elsif Input.trigger?(Input::BACK) || Input.trigger?(Input::USE)
-        break
-      end
-    end
-    @sprites["msgwindow"].visible = false
-  end
+  def pbDisplay(message)
+    # This uses the built-in Essentials message window creator
+    msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+    
+    # Force the specific size and position you requested
+    msgwindow.width  = 512
+    msgwindow.height = 94 # Slightly taller to ensure 2-line clearance
+    msgwindow.x      = (Graphics.width - 512) / 2
+    msgwindow.y      = Graphics.height - msgwindow.height - 16
+    
+    # --- MULTI-LINE FIXES ---
+    pbMessageDisplay(msgwindow, message)
+    pbDisposeMessageWindow(msgwindow)
+	Input.update
+	end
 
   def update
     pbUpdateSpriteHash(@sprites)
   end
   
-  def pbConfirm(msg)
-    UIHelper.pbConfirm(@sprites["msgwindow"], msg) { pbUpdate }
+  def pbConfirm(message, scene = nil)
+    msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+    
+    msgwindow.width         = 512
+    msgwindow.height        = 94
+    msgwindow.x             = (Graphics.width - 512) / 2
+    msgwindow.y             = Graphics.height - msgwindow.height - 16
+    msgwindow.z             = 200
+    msgwindow.letterbyletter = true 
+    
+    # 1. Start the text
+    msgwindow.text = message
+    
+    # 2. Manual loop: Keep updating until the text animation is finished
+    while msgwindow.busy?
+      Graphics.update
+      Input.update # This allows the player to "skip" to the end of the text
+      pbUpdate
+      msgwindow.update
+    end
+    
+    # 3. Text is finished! Now immediately create the Yes/No choice window
+    commands = [_INTL("Yes"), _INTL("No")]
+    cmdwindow = Window_CommandPokemon.new(commands)
+    cmdwindow.z        = msgwindow.z + 1
+    cmdwindow.viewport = @viewport
+    cmdwindow.index    = 0
+    cmdwindow.x        = msgwindow.x + msgwindow.width - cmdwindow.width
+    cmdwindow.y        = msgwindow.y - cmdwindow.height
+    
+    # 4. Input Loop for Yes/No
+    ret = -1
+    loop do
+      Graphics.update
+      Input.update
+      pbUpdate
+      cmdwindow.update
+      msgwindow.update
+      if Input.trigger?(Input::BACK)
+        ret = 1
+        break
+      elsif Input.trigger?(Input::USE)
+        ret = cmdwindow.index
+        break
+      end
+    end
+    
+    cmdwindow.dispose
+    pbDisposeMessageWindow(msgwindow)
+    Input.update
+    
+    return (ret == 0)
   end
 
-  def pbChooseNumber(helptext, maximum, initnum = 1)
-    return UIHelper.pbChooseNumber(@sprites["helpwindow"], helptext, maximum, initnum) { pbUpdate }
+  def pbChooseNumber(msg, maximum, initnum = 1)
+    return UIHelper.pbChooseNumber(@sprites["helpwindow"], msg, maximum, initnum) { pbUpdate }
   end
 
   def pbShowCommands(helptext, commands, index = 0)
@@ -1113,7 +1160,7 @@ def pbRefreshIndexChanged
             end
           elsif Input.trigger?(Input::SPECIAL)   # Checking party
             if $player.pokemon_count == 0
-              pbMessage(_INTL("There is no Pokémon."))
+              pbDisplay(_INTL("There is no Pokémon."))
             else
               pbSEPlay("GUI storage show party panel")
               itemwindow.party2sel = true
@@ -1145,7 +1192,7 @@ def pbRefreshIndexChanged
     helpwindow = @sprites["helpwindow"]
     pbBottomLeftLines(helpwindow, 1)
     helpwindow.text = helptext
-    helpwindow.width = 398
+    helpwindow.width = 512
     helpwindow.visible = true
   end
 
@@ -1509,8 +1556,9 @@ class PokemonBagScreen
         elsif useType == 3 || useType == 4 || useType == 5 # TM, HM and TR
           machine = itm.move
           movename = GameData::Move.get(machine).name
-          pbMessage(_INTL("\\se[PC access]You booted up {1}.\1", itm.name)) {@scene.pbUpdate}
-          if pbConfirmMessage(_INTL("Do you want to teach {1} to a Pokémon?", movename)) {@scene.pbUpdate}
+		  pbSEPlay("PC access")
+          pbDisplay(_INTL("You booted up {1}.", itm.name)) {@scene.pbUpdate}
+          if pbConfirm(_INTL("Do you want to teach {1} to a Pokémon?", movename)) {@scene.pbUpdate}
             pbSEPlay("GUI storage show party panel")
             ret = @scene.pbChoosePoke(2, false)
           end
@@ -1531,13 +1579,14 @@ class PokemonBagScreen
       elsif cmdToss >= 0 && command == cmdToss   # Toss item
         qty = @bag.quantity(item)
         if qty > 1
-          helptext = _INTL("Toss out how many {1}?", itm.portion_name_plural)
+		
+          helptext = _INTL("") #(#"Toss out how many {1}?", itm.portion_name_plural)
           qty = @scene.pbChooseNumber(helptext, qty)
         end
         if qty > 0
           itemname = (qty > 1) ? itm.portion_name_plural : itm.portion_name
           if pbConfirm(_INTL("Is it OK to throw away {1} {2}?", qty, itemname))
-            pbDisplay(_INTL("Threw away {1} {2}.", qty, itemname))
+            #pbDisplay(_INTL("Threw away {1} {2}.", qty, itemname))
             qty.times { @bag.remove(item) }
             @scene.pbRefresh
           end
@@ -1591,6 +1640,7 @@ class PokemonBagScreen
   def pbDisplay(text)
     @scene.pbDisplay(text)
   end
+  
 
   def pbConfirm(text)
     return @scene.pbConfirm(text)
@@ -1706,7 +1756,7 @@ class PokemonBagScreen
         raise "Can't delete items from storage"
       end
       @scene.pbRefresh
-      pbDisplay(_INTL("Threw away {1} {2}.", qty, itemname))
+      #pbDisplay(_INTL("Threw away {1} {2}.", qty, itemname))
     end
     @scene.pbEndScene
   end
@@ -1723,7 +1773,7 @@ def pbBagUseItem(bag, item, scene, screen, chosen, bagscene=nil)
   pkmn    = $player.party[chosen]
   if itm.is_machine?    # TM, HM or TR
     if $player.pokemon_count == 0
-      pbMessage(_INTL("There is no Pokémon.")) { screen.pbUpdate }
+      pbDisplay(_INTL("There is no Pokémon.")) { screen.pbUpdate }
       return 0
     end
     machine = itm.move
@@ -1737,13 +1787,13 @@ def pbBagUseItem(bag, item, scene, screen, chosen, bagscene=nil)
       end
     end
     if pkmn.egg?
-      pbMessage(_INTL("Eggs can't be taught any moves.")) { screen.pbUpdate }
+      pbDisplay(_INTL("Eggs can't be taught any moves.")) { screen.pbUpdate }
     elsif pkmn.shadowPokemon?
-      pbMessage(_INTL("Shadow Pokémon can't be taught any moves.")) { screen.pbUpdate }
+      pbDisplay(_INTL("Shadow Pokémon can't be taught any moves.")) { screen.pbUpdate }
     elsif movelist && !movelist.any? { |j| j == pkmn.species }
-      pbMessage(_INTL("{1} can't learn {2}.", pkmn.name, movename)) { screen.pbUpdate }
+      pbDisplay(_INTL("{1} can't learn {2}.", pkmn.name, movename)) { screen.pbUpdate }
     elsif !pkmn.compatible_with_move?(move)
-      pbMessage(_INTL("{1} can't learn {2}.", pkmn.name, movename)) { screen.pbUpdate }
+      pbDisplay(_INTL("{1} can't learn {2}.", pkmn.name, movename)) { screen.pbUpdate }
     else
       if pbLearnMove(pkmn, move, false, bymachine) { screen.pbUpdate }
         pkmn.add_first_move(move) if oneusemachine
@@ -1754,7 +1804,7 @@ def pbBagUseItem(bag, item, scene, screen, chosen, bagscene=nil)
     return 1
   elsif useType == 1 # Item is usable on a Pokémon
     if $player.pokemon_count == 0
-      pbMessage(_INTL("There is no Pokémon.")) { screen.pbUpdate }
+      pbDisplay(_INTL("There is no Pokémon.")) { screen.pbUpdate }
       return 0
     end
     qty = 1
@@ -1774,7 +1824,7 @@ def pbBagUseItem(bag, item, scene, screen, chosen, bagscene=nil)
     bagscene.pbRefresh if bagscene
     return 1
   else
-    pbMessage(_INTL("Can't use that here.")) { screen.pbUpdate }
+    pbDisplay(_INTL("Can't use that here.")) { screen.pbUpdate }
     return 0
   end
 end
@@ -1784,7 +1834,7 @@ end
 #=============================================================================
 ItemHandlers::UseInField.add(:SACREDASH, proc { |item|
   if $player.pokemon_count == 0
-    pbMessage(_INTL("There is no Pokémon."))
+    pbDisplay(_INTL("There is no Pokémon."))
     next false
   end
   canrevive = false
@@ -1794,7 +1844,7 @@ ItemHandlers::UseInField.add(:SACREDASH, proc { |item|
     break
   end
   if !canrevive
-    pbMessage(_INTL("It won't have any effect."))
+    pbDisplay(_INTL("It won't have any effect."))
     next false
   end
   revived = 0
@@ -1804,9 +1854,9 @@ ItemHandlers::UseInField.add(:SACREDASH, proc { |item|
     pkmn.heal
   end
   if revived > 1
-    pbMessage(_INTL("Your fainted Pokémon's HP were restored."))
+    pbDisplay(_INTL("Your fainted Pokémon's HP were restored."))
   elsif revived == 1
-    pbMessage(_INTL("Your fainted Pokémon's HP was restored."))
+    pbDisplay(_INTL("Your fainted Pokémon's HP was restored."))
   end
   next (revived > 0)
 })

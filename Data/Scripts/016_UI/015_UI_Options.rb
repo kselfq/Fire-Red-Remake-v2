@@ -295,7 +295,7 @@ class PokemonOption_Scene
     @sprites["title"].back_opacity = 0
 	
     @sprites["textbox"] = pbCreateMessageWindow
-	@sprites["textbox"].windowskin = Bitmap.new("Graphics/Windowskins/speech hgss 17") 
+	@sprites["textbox"].windowskin = Bitmap.new("Graphics/Windowskins/speech rs") 
     pbSetSystemFont(@sprites["textbox"].contents)
 	@sprites["textbox"].y = 0
 

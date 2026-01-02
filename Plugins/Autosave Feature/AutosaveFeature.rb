@@ -34,7 +34,7 @@
 # Autosave bitmap class
 #===============================================================================
 class Autosave
-  SCREEN_WIDTH  = 512
+  SCREEN_WIDTH  = 854
   SCREEN_HEIGHT = 384
   # All IDs in this array will not be autosaved even if all requirements are met.
   # IDs can be written as Integer (target map id) or 2 length Array (target map id and previous map id)

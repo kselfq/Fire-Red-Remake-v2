@@ -15,28 +15,37 @@ end
 #===============================================================================
 # Using the Poke Radar
 #===============================================================================
+
+def pbDisplay(message)
+  # Change "speech bw" to whichever windowskin you prefer from Graphics/Windowskins/
+  msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+  pbMessageDisplay(msgwindow, message)
+  pbDisposeMessageWindow(msgwindow)
+  Input.update
+end 
+
 def pbCanUsePokeRadar?
   # Can't use Radar if not in tall grass
   terrain = $game_map.terrain_tag($game_player.x, $game_player.y)
   if !terrain.land_wild_encounters || !terrain.shows_grass_rustle
-    pbMessage(_INTL("Can't use that here."))
+    pbDisplay(_INTL("Can't use that here."))
     return false
   end
   # Can't use Radar if map has no grass-based encounters (ignoring Bug Contest)
   if !$PokemonEncounters.has_normal_land_encounters?
-    pbMessage(_INTL("Can't use that here."))
+    pbDisplay(_INTL("Can't use that here."))
     return false
   end
   # Can't use Radar while cycling
   if $PokemonGlobal.bicycle
-    pbMessage(_INTL("Can't use that while on a bicycle."))
+    pbDisplay(_INTL("Can't use that while on a bicycle."))
     return false
   end
   # Debug
   return true if $DEBUG && Input.press?(Input::CTRL)
   # Can't use Radar if it isn't fully charged
   if $PokemonGlobal.pokeradarBattery && $PokemonGlobal.pokeradarBattery > 0
-    pbMessage(_INTL("The battery has run dry!\nFor it to recharge, you need to walk another {1} steps.",
+    pbDisplay(_INTL("The battery has run dry!\nFor it to recharge, you need to walk another {1} steps.",
                     $PokemonGlobal.pokeradarBattery))
     return false
   end
@@ -91,7 +100,7 @@ def pbPokeRadarHighlightGrass(showmessage = true)
   end
   if grasses.length == 0
     # No shaking grass found, break the chain
-    pbMessage(_INTL("The grassy patch remained quiet...")) if showmessage
+    pbDisplay(_INTL("The grassy patch remained quiet...")) if showmessage
     pbPokeRadarCancel
   else
     # Show grass rustling animations

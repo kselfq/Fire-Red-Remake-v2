@@ -493,7 +493,7 @@ class PokemonParty_Scene
     @sprites["messagebox"].viewport       = @viewport
     @sprites["messagebox"].visible        = false
     @sprites["messagebox"].letterbyletter = true
-	@sprites["messagebox"].windowskin = Bitmap.new("Graphics/Windowskins/speech hgss 17")
+	@sprites["messagebox"].windowskin = Bitmap.new("Graphics/Windowskins/speech rs")
     pbBottomLeftLines(@sprites["messagebox"], 2)
     @sprites["storagetext"] = Window_UnformattedTextPokemon.new(
       @can_access_storage ? _INTL("[D]: To Boxes") : ""
@@ -508,7 +508,7 @@ class PokemonParty_Scene
     @sprites["helpwindow"] = Window_UnformattedTextPokemon.new(starthelptext)
     #@sprites["helpwindow"].viewport = @viewport
     @sprites["helpwindow"].visible  = true
-	@sprites["helpwindow"].windowskin = Bitmap.new("Graphics/Windowskins/speech hgss 17")
+	@sprites["helpwindow"].windowskin = Bitmap.new("Graphics/Windowskins/speech rs")
     pbBottomLeftLines(@sprites["helpwindow"], 1)
     pbSetHelpText(starthelptext)
     # Add party Pokémon sprites
@@ -538,58 +538,66 @@ class PokemonParty_Scene
     @viewport.dispose
   end
 
-  def pbDisplay(text)
-    @sprites["messagebox"].text    = text
-    @sprites["messagebox"].visible = true
-    @sprites["helpwindow"].visible = false
-    pbPlayDecisionSE
+  def pbDisplay(message)
+  # Change "speech bw" to whichever windowskin you prefer from Graphics/Windowskins/
+  msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+  pbMessageDisplay(msgwindow, message)
+  pbDisposeMessageWindow(msgwindow)
+  Input.update
+end
+
+  def pbConfirm(message, scene = nil)
+    msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+    
+    msgwindow.width         = 512
+    msgwindow.height        = 94
+    msgwindow.x             = (Graphics.width - 512) / 2
+    msgwindow.y             = Graphics.height - msgwindow.height - 16
+    msgwindow.z             = 200
+    msgwindow.letterbyletter = true 
+    
+    # 1. Start the text
+    msgwindow.text = message
+    
+    # 2. Manual loop: Keep updating until the text animation is finished
+    while msgwindow.busy?
+      Graphics.update
+      Input.update # This allows the player to "skip" to the end of the text
+      pbUpdate
+      msgwindow.update
+    end
+    
+    # 3. Text is finished! Now immediately create the Yes/No choice window
+    commands = [_INTL("Yes"), _INTL("No")]
+    cmdwindow = Window_CommandPokemon.new(commands)
+    cmdwindow.z        = msgwindow.z + 1
+    cmdwindow.viewport = @viewport
+    cmdwindow.index    = 0
+    cmdwindow.x        = msgwindow.x + msgwindow.width - cmdwindow.width
+    cmdwindow.y        = msgwindow.y - cmdwindow.height
+    
+    # 4. Input Loop for Yes/No
+    ret = -1
     loop do
       Graphics.update
       Input.update
-      self.update
-      if @sprites["messagebox"].busy?
-        if Input.trigger?(Input::USE)
-          pbPlayDecisionSE if @sprites["messagebox"].pausing?
-          @sprites["messagebox"].resume
-        end
-      elsif Input.trigger?(Input::BACK) || Input.trigger?(Input::USE)
+      pbUpdate
+      cmdwindow.update
+      msgwindow.update
+      if Input.trigger?(Input::BACK)
+        ret = 1
+        break
+      elsif Input.trigger?(Input::USE)
+        ret = cmdwindow.index
         break
       end
     end
-    @sprites["messagebox"].visible = false
-    @sprites["helpwindow"].visible = true
-  end
-
-  def pbDisplayConfirm(text)
-    ret = -1
-    @sprites["messagebox"].text    = text
-    @sprites["messagebox"].visible = true
-    @sprites["helpwindow"].visible = false
-    using(cmdwindow = Window_CommandPokemon.new([_INTL("Yes"), _INTL("No")])) do
-      cmdwindow.visible = false
-      pbBottomRight(cmdwindow)
-      cmdwindow.y -= @sprites["messagebox"].height
-      cmdwindow.z = @viewport.z + 1
-      loop do
-        Graphics.update
-        Input.update
-        cmdwindow.visible = true if !@sprites["messagebox"].busy?
-        cmdwindow.update
-        self.update
-        if !@sprites["messagebox"].busy?
-          if Input.trigger?(Input::BACK)
-            ret = false
-            break
-          elsif Input.trigger?(Input::USE) && @sprites["messagebox"].resume
-            ret = (cmdwindow.index == 0)
-            break
-          end
-        end
-      end
-    end
-    @sprites["messagebox"].visible = false
-    @sprites["helpwindow"].visible = true
-    return ret
+    
+    cmdwindow.dispose
+    pbDisposeMessageWindow(msgwindow)
+    Input.update
+    
+    return (ret == 0)
   end
 
   def pbShowCommands(helptext, commands, index = 0)
