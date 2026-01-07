@@ -9,18 +9,66 @@ def pbDisplay(message)
   Input.update
 end 
 
+def pbConfirm(message, commands, scene = nil)
+  view = nil
+  if scene
+    if scene.respond_to?(:viewport)
+      view = scene.viewport
+    elsif scene.instance_variable_defined?(:@viewport)
+      view = scene.instance_variable_get(:@viewport)
+    end
+  end
+  # Create the window
+  msgwindow = pbCreateMessageWindow(view, "Graphics/Windowskins/speech rs")
+  
+  # --- POSITIONING FIX ---
+  msgwindow.width  = 512
+  msgwindow.height = 96 
+  msgwindow.x      = (Graphics.width - msgwindow.width) / 2
+  msgwindow.y      = Graphics.height - msgwindow.height - 16 # 16 pixels from bottom
+  
+  msgwindow.text = message
+  # Show the choices
+  ret = pbShowCommands(msgwindow, commands, -1)
+  pbDisposeMessageWindow(msgwindow)
+  return ret
+end
+
+def pbConfirmWithHelp(message, commands, help_texts, scene = nil)
+  view = nil
+  if scene
+    if scene.respond_to?(:viewport)
+      view = scene.viewport
+    elsif scene.instance_variable_defined?(:@viewport)
+      view = scene.instance_variable_get(:@viewport)
+    end
+  end
+  # Create the main message window
+  msgwindow = pbCreateMessageWindow(view, "Graphics/Windowskins/speech rs")
+  msgwindow.width  = 512
+  msgwindow.height = 96 
+  msgwindow.x      = (Graphics.width - msgwindow.width) / 2
+  msgwindow.y      = Graphics.height - msgwindow.height - 16 # 16 pixels from bottom
+  msgwindow.text   = message if message
+  
+  # Show commands with the associated help window
+  ret = pbShowCommandsWithHelp(msgwindow, commands, help_texts, -1)
+  pbDisposeMessageWindow(msgwindow)
+  return ret
+end
+
 def pbPCItemStorage
   command = 0
   loop do
-    command = pbShowCommandsWithHelp(nil,
-                                     [_INTL("Withdraw Item"),
-                                      _INTL("Deposit Item"),
-                                      _INTL("Toss Item"),
-                                      _INTL("Exit")],
-                                     [_INTL("Take out items from the PC."),
-                                      _INTL("Store items in the PC."),
-                                      _INTL("Throw away items stored in the PC."),
-                                      _INTL("Go back to the previous menu.")], -1, command)
+    command = pbConfirmWithHelp(nil,
+                                [_INTL("Withdraw Item"),
+                                 _INTL("Deposit Item"),
+                                 _INTL("Toss Item"),
+                                 _INTL("Exit")],
+                                [_INTL("Take out items from the PC."),
+                                 _INTL("Store items in the PC."),
+                                 _INTL("Throw away items stored in the PC."),
+                                 _INTL("Go back to the previous menu.")])
     case command
     when 0   # Withdraw Item
       if !$PokemonGlobal.pcItemStorage
@@ -77,7 +125,7 @@ def pbPCMailbox
       command = pbShowCommands(nil, commands, -1, command)
       if command >= 0 && command < $PokemonGlobal.mailbox.length
         mailIndex = command
-        commandMail = pbMessage(
+        commandMail = pbConfirm(
           _INTL("What do you want to do with {1}'s Mail?", $PokemonGlobal.mailbox[mailIndex].sender),
           [_INTL("Read"),
            _INTL("Move to Bag"),
@@ -90,7 +138,7 @@ def pbPCMailbox
             pbDisplayMail($PokemonGlobal.mailbox[mailIndex])
           end
         when 1   # Move to Bag
-          if pbConfirmMessage(_INTL("The message will be lost. Is that OK?"))
+          if pbConfirm(_INTL("The message will be lost. Is that OK?"))
             if $bag.add($PokemonGlobal.mailbox[mailIndex].item)
               pbDisplay(_INTL("The Mail was returned to the Bag with its message erased."))
               $PokemonGlobal.mailbox.delete_at(mailIndex)
@@ -156,7 +204,7 @@ def pbPokeCenterPC
   # Main loop
   command = 0
   loop do
-    choice = pbMessage(_INTL("Which PC should be accessed?"), command_list, -1, nil, command)
+    choice = pbConfirm(_INTL("Which PC should be accessed?"), command_list)
     if choice < 0
       pbPlayCloseMenuSE
       break

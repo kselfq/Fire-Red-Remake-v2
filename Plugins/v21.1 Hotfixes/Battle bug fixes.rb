@@ -167,7 +167,7 @@ module Battle::CatchAndStoreMixin
     if pbPlayer.party_full? && (@sendToBoxes == 0 || @sendToBoxes == 2)   # Ask/must add to party
       cmds = [_INTL("Add to your party"),
               _INTL("Send to a Box"),
-              _INTL("See {1}'s summary", pkmn.name),
+              _INTL("Check summary", pkmn.name), #_INTL("{1}'s summary", pkmn.name),
               _INTL("Check party")]
       cmds.delete_at(1) if @sendToBoxes == 2
       loop do

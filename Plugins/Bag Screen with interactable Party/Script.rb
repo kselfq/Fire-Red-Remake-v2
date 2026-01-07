@@ -1706,7 +1706,8 @@ class PokemonBagScreen
       itm = GameData::Item.get(item)
       qty = @bag.quantity(item)
       if qty > 1 && !itm.is_important?
-        qty = @scene.pbChooseNumber(_INTL("How many do you want to deposit?"), qty)
+        #qty = @scene.pbChooseNumber(_INTL("How many do you want to deposit?"), qty)
+		qty = @scene.pbChooseNumber(_INTL(""), qty)
       end
       if qty > 0
         if storage.can_add?(item, qty)

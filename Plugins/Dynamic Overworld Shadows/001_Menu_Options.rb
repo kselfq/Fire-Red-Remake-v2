@@ -98,24 +98,24 @@ class Window_PokemonOption
   end
 end
 
-MenuHandlers.add(:options_menu, :zbox_shadows, {
-  "name"        => _INTL("Sombras Dinámicas"),
-  #"name"        => _INTL("Dynamic Shadows"),
-  "order"       => 125,
-  "type"        => ZBox_ArrowOption, 
-  "parameters"  => [_INTL("OFF"), _INTL("BASIC"), _INTL("STANDARD"), _INTL("ENHANCED")],
-  "description" => _INTL("Configura la calidad y el comportamiento de sombras en los personajes."),
-  #"description" => _INTL("Configure the quality and behavior of shadows on the characters."),
-  "get_proc"    => proc { next $PokemonSystem.zbox_shadow_mode },
-  "set_proc"    => proc { |value, scene|
-    old_value = $PokemonSystem.zbox_shadow_mode
-    $PokemonSystem.zbox_shadow_mode = value
+#MenuHandlers.add(:options_menu, :zbox_shadows, {
+#  "name"        => _INTL("Sombras Dinámicas"),
+#  #"name"        => _INTL("Dynamic Shadows"),
+#  "order"       => 125,
+#  "type"        => ZBox_ArrowOption, 
+#  "parameters"  => [_INTL("OFF"), _INTL("BASIC"), _INTL("STANDARD"), _INTL("ENHANCED")],
+#  "description" => _INTL("Configura la calidad y el comportamiento de sombras en los personajes."),
+#  #"description" => _INTL("Configure the quality and behavior of shadows on the characters."),
+#  "get_proc"    => proc { next $PokemonSystem.zbox_shadow_mode },
+#  "set_proc"    => proc { |value, scene|
+#    old_value = $PokemonSystem.zbox_shadow_mode
+#    $PokemonSystem.zbox_shadow_mode = value
     
-    if (old_value == 0 && value > 0) || (old_value > 0 && value == 0)
-      if $scene.is_a?(Scene_Map)
-        $scene.disposeSpritesets
-        $scene.createSpritesets
-      end
-    end
-  }
-})
+#    if (old_value == 0 && value > 0) || (old_value > 0 && value == 0)
+#     if $scene.is_a?(Scene_Map)
+#        $scene.disposeSpritesets
+#        $scene.createSpritesets
+#      end
+#    end
+#  }
+#})

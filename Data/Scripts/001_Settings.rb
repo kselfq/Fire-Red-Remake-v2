@@ -185,6 +185,7 @@ module Settings
   BADGE_FOR_SURF      = 4
   BADGE_FOR_ROCKSMASH = 5
   BADGE_FOR_WATERFALL = 6
+  BADGE_FOR_DIVE      = 7
 
   #=============================================================================
 

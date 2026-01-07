@@ -1,15 +1,15 @@
 #===============================================================================
 # Ensure pbBlurMap is defined and control its blur strength
 #===============================================================================
-unless Kernel.respond_to?(:pbBlurMap)
-  def pbBlurMap(bitmap)
-    if bitmap.is_a?(Bitmap)
-      bitmap.blur; bitmap.blur; bitmap.blur; bitmap.blur 
-      bitmap.blur; bitmap.blur; bitmap.blur; bitmap.blur 	
-    end
-    return bitmap
-  end
-end
+#unless Kernel.respond_to?(:pbBlurMap)
+#  def pbBlurMap(bitmap)
+#    if bitmap.is_a?(Bitmap)
+#      bitmap.blur; bitmap.blur; bitmap.blur; bitmap.blur 
+#      bitmap.blur; bitmap.blur; bitmap.blur; bitmap.blur 	
+#    end
+#    return bitmap
+#  end
+#end
 #===============================================================================
 
 class Scene_Map
@@ -156,9 +156,9 @@ end
 
   def getTimePeriodData
     current_hour = Time.now.hour
-    if current_hour >= 5 && current_hour < 10
+    if current_hour >= 5 && current_hour < 12
       return ["daytime_morning", "Morning"]
-    elsif current_hour >= 10 && current_hour < 17
+    elsif current_hour >= 12 && current_hour < 17
       return ["daytime_afternoon", "Afternoon"]
     elsif current_hour >= 17 && current_hour < 20
       return ["daytime_evening", "Evening"]
@@ -246,10 +246,35 @@ end
     @viewport = Viewport.new(0, 0, Graphics.width, Graphics.height)
     @viewport.z = 99999
 
+    #@sprites["map_blur"] = Sprite.new(@viewport)
+    #@sprites["map_blur"].bitmap = Kernel.pbBlurMap(Graphics.snap_to_bitmap)
+    #@sprites["map_blur"].z = 99
+# --- ULTRA-SOFT STATIC BLUR (Joiplay Compatible) ---
     @sprites["map_blur"] = Sprite.new(@viewport)
-    @sprites["map_blur"].bitmap = Kernel.pbBlurMap(Graphics.snap_to_bitmap)
-    @sprites["map_blur"].z = 99
-
+    @sprites["map_blur"].bitmap = Graphics.snap_to_bitmap
+    @sprites["map_blur"].z = 99 # Sits behind the menu BG (z=100)
+    
+    # Scale down to 1/4 for a massive blur radius
+    bm = @sprites["map_blur"].bitmap
+    small_bm = Bitmap.new(bm.width / 3, bm.height / 3)
+    small_bm.stretch_blt(small_bm.rect, bm, bm.rect)
+    
+    # 5-Pass Gaussian-style Cross Blur
+    4.times do
+      temp_bm = small_bm.clone
+      opacity = 128 
+      small_bm.blt(2, 0, temp_bm, temp_bm.rect, opacity)  # Right
+      small_bm.blt(-2, 0, temp_bm, temp_bm.rect, opacity) # Left
+      small_bm.blt(0, 2, temp_bm, temp_bm.rect, opacity)  # Down
+      small_bm.blt(0, -2, temp_bm, temp_bm.rect, opacity) # Up
+      temp_bm.dispose
+    end
+    
+    bm.clear
+    bm.stretch_blt(bm.rect, small_bm, small_bm.rect)
+    small_bm.dispose
+    @sprites["map_blur"].color = Color.new(0, 0, 0, 80) # Soft darkening
+	
     @sprites["bg"] = Sprite.new(@viewport)
     @sprites["bg"].bitmap = RPG::Cache.ui("Menu Custom/menubg")
     @sprites["bg"].z = 100 

@@ -6,9 +6,9 @@ module MessageConfig
   LIGHT_TEXT_SHADOW_COLOR  = Color.new(72, 80, 88, 0)
   DARK_TEXT_MAIN_COLOR     = Color.new(80, 80, 88)
   DARK_TEXT_SHADOW_COLOR   = Color.new(160, 160, 168, 0)
-  MALE_TEXT_MAIN_COLOR     = Color.new(48, 80, 200)   # Used by message tag "\b"
+  MALE_TEXT_MAIN_COLOR     = Color.new(80, 80, 88) #Color.new(48, 80, 200)   # Used by message tag "\b"
   MALE_TEXT_SHADOW_COLOR   = Color.new(208, 208, 200, 0)
-  FEMALE_TEXT_MAIN_COLOR   = Color.new(224, 8, 8)   # Used by message tag "\r"
+  FEMALE_TEXT_MAIN_COLOR   = Color.new(80, 80, 88) #Color.new(224, 8, 8)   # Used by message tag "\r"
   FEMALE_TEXT_SHADOW_COLOR = Color.new(208, 208, 200, 0)
   FONT_NAME                = "poki" #regular
   FONT_SIZE                = 23

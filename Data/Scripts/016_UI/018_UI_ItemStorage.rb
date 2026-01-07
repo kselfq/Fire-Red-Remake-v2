@@ -61,6 +61,8 @@ class ItemStorage_Scene
   TITLESHADOWCOLOR    = Color.new(192, 32, 40, 0)
   ITEMSVISIBLE        = 7
 
+
+
   def initialize(title)
     @title = title
   end
@@ -105,6 +107,7 @@ class ItemStorage_Scene
     @sprites["msgwindow"] = Window_AdvancedTextPokemon.new("")
     @sprites["msgwindow"].visible  = false
     @sprites["msgwindow"].viewport = @viewport
+	@sprites["msgwindow"].setSkin("Graphics/Windowskins/speech rs")
     pbBottomLeftLines(@sprites["helpwindow"], 1)
     pbDeactivateWindows(@sprites)
     pbRefresh

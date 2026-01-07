@@ -247,9 +247,17 @@ class PokemonBag_Scene
     @viewport.dispose
   end
 
-  def pbDisplay(msg, brief = false)
-    UIHelper.pbDisplay(@sprites["msgwindow"], msg, brief) { pbUpdate }
-  end
+  #def pbDisplay(msg, brief = false)
+  #  UIHelper.pbDisplay(@sprites["msgwindow"], msg, brief) { pbUpdate }
+  #end
+
+def pbDisplay(message)
+  # Change "speech bw" to whichever windowskin you prefer from Graphics/Windowskins/
+  msgwindow = pbCreateMessageWindow(@viewport, "Graphics/Windowskins/speech rs")
+  pbMessageDisplay(msgwindow, message)
+  pbDisposeMessageWindow(msgwindow)
+  Input.update
+end
 
   def pbConfirm(msg)
     UIHelper.pbConfirm(@sprites["msgwindow"], msg) { pbUpdate }
@@ -581,9 +589,9 @@ class PokemonBagScreen
     return item
   end
 
-  def pbDisplay(text)
-    @scene.pbDisplay(text)
-  end
+  #def pbDisplay(text)
+   # @scene.pbDisplay(text)
+  #end
 
   def pbConfirm(text)
     return @scene.pbConfirm(text)
